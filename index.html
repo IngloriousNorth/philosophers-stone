@@ -282,9 +282,10 @@ $(document).ready(function() {
       alert("Please extract text from at least one source first.");
       return;
     }
-
+  
     $("#QRNG").prop("disabled", true);
     var rawSeed = $("#seedInput").val().trim();
+    $("#seedInput").val("");
     var seedLabel = rawSeed ? rawSeed : "[unseeded]";
     var seedOffset = rawSeed ? hashSeed(rawSeed) : 0;
 
