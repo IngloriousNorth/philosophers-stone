@@ -44,9 +44,21 @@
   button:disabled {
     cursor: not-allowed;
   }
+  #status-container {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #fafafa;
+    border-radius: 4px;
+  }
+  #extracted-list {
+    margin: 6px 0 0 0;
+    padding-left: 20px;
+    color: green;
+    font-weight: bold;
+  }
   #status {
     font-weight: bold;
-    margin-left: 10px;
   }
   .seed-header {
     color: goldenrod;
@@ -70,7 +82,11 @@
   <input type="text" id="textUrl" placeholder="Paste .txt or book URL here...">
   <button id="extractBtn">Extract Text</button>
   <button id="clearBtn">Clear Database</button>
-  <span id="status" class="status-loading">Initializing...</span>
+  
+  <div id="status-container">
+    <span id="status" class="status-loading">Initializing...</span>
+    <ul id="extracted-list"></ul>
+  </div>
 </div>
 
 <br>
@@ -109,8 +125,8 @@ const DEFAULT_TEXTS = [
     url: "https://www.gutenberg.org/cache/epub/7145/pg7145.txt"
   },
   { 
-      title: "The Catcher in the Rye",
-      url : "https://archive.org/download/1_20191103_20191103_1326/1_djvu.txt"
+    title: "The Catcher in the Rye",
+    url : "https://archive.org/download/1_20191103_20191103_1326/1_djvu.txt"
   }
 ];
 
@@ -151,8 +167,6 @@ function hashSeed(seedStr) {
   return Math.abs(hash);
 }
 
-// --- RECOVERED WEAVER & OBELISK LOGIC ---
-
 // Obelisk: Extract word slices using modulo wrapping over end0r
 function obelisk(index, ra, end0r) {
   if (end0r.length === 0) return "";
@@ -173,13 +187,11 @@ function weaver(poolSlice, end0r, seedOffset, sliceIndex) {
   var total = end0r.length;
   if (total === 0) return "";
 
-  // Segment offset scaled across the total corpus length
-  var segmentSize = Math.floor(total / 16);
+  var segmentSize = Math.floor(total / 14);
   var entropyValue = (poolSlice[0] * 11011) + (poolSlice[1] * 1337) + (poolSlice[2] * 88) + poolSlice[3];
   
-  // Calculate scaled index with seed offset and slice placement
   var index = ((sliceIndex * segmentSize) + entropyValue + seedOffset) % total;
-  var ra = (poolSlice[3] % 32) + 1;
+  var ra = (poolSlice[3] % 14) + 1;
 
   return obelisk(index, ra, end0r);
 }
@@ -189,11 +201,11 @@ function t3(poolSlice, end0r, seedOffset, sliceIndex) {
   var total = end0r.length;
   if (total === 0) return "";
 
-  var segmentSize = Math.floor(total / 16);
-  var secondaryEntropy = (poolSlice[3] * 9999) + (poolSlice[2] * 1337) + (poolSlice[1] * 88) + poolSlice[0];
+  var segmentSize = Math.floor(total / 14);
+  var secondaryEntropy = (poolSlice[3] * 11011) + (poolSlice[2] * 1337) + (poolSlice[1] * 88) + poolSlice[0];
   
   var index = ((sliceIndex * segmentSize) + secondaryEntropy + (seedOffset * 3)) % total;
-  var ra = (poolSlice[0] % 13) + 1;
+  var ra = (poolSlice[0] % 14) + 1;
 
   return obelisk(index, ra, end0r);
 }
@@ -201,29 +213,24 @@ function t3(poolSlice, end0r, seedOffset, sliceIndex) {
 // Sequentially load texts one by one and update progress status
 async function loadDefaults() {
   $("#QRNG").prop("disabled", true);
+  $("#extracted-list").empty();
   
   for (let i = 0; i < DEFAULT_TEXTS.length; i++) {
     const item = DEFAULT_TEXTS[i];
-    
-    if (i === 0) {
-      $("#status").text(`Loading ${item.title}...`).attr("class", "status-loading");
-    } else {
-      const prevTitle = DEFAULT_TEXTS[i - 1].title;
-      $("#status").html(`<span style="color: green;">${prevTitle} loaded</span>, now loading ${item.title}...`).attr("class", "status-loading");
-    }
+    $("#status").text(`Extracting ${item.title}...`).attr("class", "status-loading");
 
     const fetchedText = await fetchTextStream(item.url);
     if (fetchedText) {
       gaius += " " + fetchedText;
       updateEnd0r();
+      $("#extracted-list").append(`<li>${item.title} extracted.</li>`);
     } else {
       console.warn("Could not load stream for:", item.title);
     }
   }
 
   if (end0r.length > 0) {
-    const lastTitle = DEFAULT_TEXTS[DEFAULT_TEXTS.length - 1].title;
-    $("#status").html(`<span style="color: green;">${lastTitle} loaded</span>, database ready (${end0r.length.toLocaleString()} words total)`).attr("class", "status-ready");
+    $("#status").text(`Database ready (${end0r.length.toLocaleString()} words total)`).attr("class", "status-ready");
     $("#QRNG").prop("disabled", false);
   } else {
     $("#status").text("Failed to load default texts.").attr("class", "status-error");
@@ -240,7 +247,7 @@ $(document).ready(function() {
     if (!rawUrl) return;
 
     $("#extractBtn").prop("disabled", true);
-    $("#status").text("Extracting text...").attr("class", "status-loading");
+    $("#status").text(`Extracting custom URL (${rawUrl})...`).attr("class", "status-loading");
 
     try {
       var newText = await fetchTextStream(rawUrl);
@@ -248,7 +255,8 @@ $(document).ready(function() {
         gaius += " " + newText;
         updateEnd0r();
 
-        $("#status").html(`<span style="color: green;">Text extracted!</span> Total database size: ${end0r.length.toLocaleString()} words`).attr("class", "status-ready");
+        $("#extracted-list").append(`<li>Custom source (${rawUrl}) extracted.</li>`);
+        $("#status").text(`Database ready (${end0r.length.toLocaleString()} words total)`).attr("class", "status-ready");
         $("#textUrl").val("");
         $("#QRNG").prop("disabled", false);
       } else {
@@ -266,6 +274,7 @@ $(document).ready(function() {
   $("#clearBtn").click(function() {
     gaius = "";
     end0r = [];
+    $("#extracted-list").empty();
     $("#status").text("Database cleared (0 words)").attr("class", "status-ready");
     $("#QRNG").prop("disabled", true);
   });
@@ -293,17 +302,14 @@ $(document).ready(function() {
       var numbers = data.numbers; // Expects 64 numbers array
       var compilation = "";
 
-      // 16 4-byte entropy blocks mapping through t1 weaver
       for (var i = 0; i < 16; i++) {
         var poolSlice = numbers.slice(i * 4, (i + 1) * 4);
         
-        // Primary T1 Weaver Pass
         var res1 = weaver(poolSlice, end0r, seedOffset, i);
-        if (compilation.length < 333 && res1) {
+        if (compilation.length < 101 && res1) {
           compilation += res1 + " ";
         }
 
-        // Secondary T3 Weaver Pass
         var res3 = t3(poolSlice, end0r, seedOffset, i);
         if (compilation.length < 101 && res3) {
           compilation += res3 + " ";
