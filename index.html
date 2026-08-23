@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPINNING-SWORD</title>
+<style>
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 15px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    font-family: monospace, sans-serif;
+  }
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  #spellbook {
+    width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    line-height: 1.5;
+  }
+  .controls {
+    margin-bottom: 10px;
+  }
+  input[type="text"] {
+    padding: 6px;
+    width: 280px;
+  }
+  button {
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  #status {
+    font-weight: bold;
+    margin-left: 10px;
+  }
+  .seed-header {
+    color: goldenrod;
+    font-weight: bold;
+    margin-right: 6px;
+  }
+  .status-loading { color: orange; }
+  .status-ready { color: green; font-weight: bold; }
+  .status-error { color: red; }
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+
+<h1>SPINNING-SWORD</h1><br>
+<span>YOUR SWORD LEND ME YOUR SWORD</span><br><br>
+<img src="https://i.imgur.com/Yhdf7cm.gif"><br><br>
+
+<!-- DB Load & Text Extraction Controls -->
+<div class="controls">
+  <input type="text" id="textUrl" placeholder="Paste .txt or book URL here...">
+  <button id="extractBtn">Extract Text</button>
+  <button id="clearBtn">Clear Database</button>
+  <span id="status" class="status-loading">Initializing...</span>
+</div>
+
+<br>
+
+<!-- Cleromancy Controls -->
+<div class="controls">
+  <input type="text" id="seedInput" placeholder="Write a seed...">
+  <button id="QRNG" disabled>Cleromance</button>
+</div>
+
+<div id="spellbook" hidden></div>
+<button id="clearOracleBtn" hidden>Clear Oracle</button>
+
+<script>
+var gaius = ""; // Global concatenated text pool
+var end0r = []; // Tokenized word array spanning entire gaius
+
+// Val.town Text Proxy Endpoint
+const TEXT_PROXY_ENDPOINT = "https://Selapian--69e0fdf69f2411f1b5851607ee4eb77e.web.val.run";
+
+// Val.town QRNG Entropy Endpoint (64 Count Preserved)
+const QRNG_ENDPOINT = "https://Selapian--2f58e6388fb311f1b0781607ee4eb77e.web.val.run?count=64";
+
+// Sequential Default Texts array
+const DEFAULT_TEXTS = [
+  {
+    title: "Alice in Wonderland",
+    url: "https://archive.org/download/alicesadventures11484html/11484-8.txt"
+  },
+  {
+    title: "The Secret Teachings of All Ages",
+    url: "https://archive.org/download/TheSecretTeachingsOfAllAgesManlyHall/The_Secret_Teachings_of_All_Ages_-%20_Manly_Hall_djvu.txt"
+  },
+  {
+    title: "The Egyptian Book of the Dead",
+    url: "https://www.gutenberg.org/cache/epub/7145/pg7145.txt"
+  },
+  { 
+      title: "The Catcher in the Rye",
+      url : "https://archive.org/download/1_20191103_20191103_1326/1_djvu.txt"
+  }
+];
+
+// Fetch raw text with timeout safety
+async function fetchTextStream(targetUrl) {
+  const proxyUrl = `${TEXT_PROXY_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
+  try {
+    const res = await fetch(proxyUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    
+    if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    
+    return data.text || "";
+  } catch (e) {
+    clearTimeout(timeoutId);
+    console.warn(`Fetch failed for ${targetUrl}:`, e.message);
+    return "";
+  }
+}
+
+// Tokenize gaius into end0r array
+function updateEnd0r() {
+  end0r = gaius.trim().split(/\s+/).filter(w => w.length > 0);
+}
+
+// Seed hashing helper
+function hashSeed(seedStr) {
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+// --- RECOVERED WEAVER & OBELISK LOGIC ---
+
+// Obelisk: Extract word slices using modulo wrapping over end0r
+function obelisk(index, ra, end0r) {
+  if (end0r.length === 0) return "";
+  
+  var spell = "";
+  var totalWords = end0r.length;
+  var safeIndex = Math.abs(index) % totalWords;
+
+  for (var i = 0; i < ra; i++) {
+    var word = end0r[(safeIndex + i) % totalWords];
+    spell += word + " ";
+  }
+  return spell;
+}
+
+// T1 Weaver: Scale index calculation across dynamic end0r size
+function weaver(poolSlice, end0r, seedOffset, sliceIndex) {
+  var total = end0r.length;
+  if (total === 0) return "";
+
+  // Segment offset scaled across the total corpus length
+  var segmentSize = Math.floor(total / 32);
+  var entropyValue = (poolSlice[0] * 11011) + (poolSlice[1] * 1337) + (poolSlice[2] * 88) + poolSlice[3];
+  
+  // Calculate scaled index with seed offset and slice placement
+  var index = ((sliceIndex * segmentSize) + entropyValue + seedOffset) % total;
+  var ra = (poolSlice[3] % 32) + 1;
+
+  return obelisk(index, ra, end0r);
+}
+
+// T3 Weaver: Secondary compilation weaver pass
+function t3(poolSlice, end0r, seedOffset, sliceIndex) {
+  var total = end0r.length;
+  if (total === 0) return "";
+
+  var segmentSize = Math.floor(total / 32);
+  var secondaryEntropy = (poolSlice[3] * 4096) + (poolSlice[2] * 256) + (poolSlice[1] * 16) + poolSlice[0];
+  
+  var index = ((sliceIndex * segmentSize) + secondaryEntropy + (seedOffset * 3)) % total;
+  var ra = (poolSlice[0] % 13) + 1;
+
+  return obelisk(index, ra, end0r);
+}
+
+// Sequentially load texts one by one and update progress status
+async function loadDefaults() {
+  $("#QRNG").prop("disabled", true);
+  
+  for (let i = 0; i < DEFAULT_TEXTS.length; i++) {
+    const item = DEFAULT_TEXTS[i];
+    
+    if (i === 0) {
+      $("#status").text(`Loading ${item.title}...`).attr("class", "status-loading");
+    } else {
+      const prevTitle = DEFAULT_TEXTS[i - 1].title;
+      $("#status").html(`<span style="color: green;">${prevTitle} loaded</span>, now loading ${item.title}...`).attr("class", "status-loading");
+    }
+
+    const fetchedText = await fetchTextStream(item.url);
+    if (fetchedText) {
+      gaius += " " + fetchedText;
+      updateEnd0r();
+    } else {
+      console.warn("Could not load stream for:", item.title);
+    }
+  }
+
+  if (end0r.length > 0) {
+    const lastTitle = DEFAULT_TEXTS[DEFAULT_TEXTS.length - 1].title;
+    $("#status").html(`<span style="color: green;">${lastTitle} loaded</span>, database ready (${end0r.length.toLocaleString()} words total)`).attr("class", "status-ready");
+    $("#QRNG").prop("disabled", false);
+  } else {
+    $("#status").text("Failed to load default texts.").attr("class", "status-error");
+  }
+}
+
+$(document).ready(function() {
+  
+  loadDefaults();
+
+  // Extract new URL text and append directly to gaius
+  $("#extractBtn").click(async function() {
+    var rawUrl = $("#textUrl").val().trim();
+    if (!rawUrl) return;
+
+    $("#extractBtn").prop("disabled", true);
+    $("#status").text("Extracting text...").attr("class", "status-loading");
+
+    try {
+      var newText = await fetchTextStream(rawUrl);
+      if (newText) {
+        gaius += " " + newText;
+        updateEnd0r();
+
+        $("#status").html(`<span style="color: green;">Text extracted!</span> Total database size: ${end0r.length.toLocaleString()} words`).attr("class", "status-ready");
+        $("#textUrl").val("");
+        $("#QRNG").prop("disabled", false);
+      } else {
+        throw new Error("Empty text returned");
+      }
+    } catch (err) {
+      console.error(err);
+      $("#status").text("Failed to extract text.").attr("class", "status-error");
+    } finally {
+      $("#extractBtn").prop("disabled", false);
+    }
+  });
+
+  // Clear loaded corpus DB
+  $("#clearBtn").click(function() {
+    gaius = "";
+    end0r = [];
+    $("#status").text("Database cleared (0 words)").attr("class", "status-ready");
+    $("#QRNG").prop("disabled", true);
+  });
+
+  // Clear Oracle text output
+  $("#clearOracleBtn").click(function() {
+    $("#spellbook").empty().hide();
+    $(this).hide();
+  });
+
+  // Execute Cleromance using t1 and t3 weaver passes over end0r
+  $("#QRNG").click(function() {
+    if (end0r.length === 0) {
+      alert("Please extract text from at least one source first.");
+      return;
+    }
+
+    $("#QRNG").prop("disabled", true);
+    var rawSeed = $("#seedInput").val().trim();
+    var seedLabel = rawSeed ? rawSeed : "[unseeded]";
+    var seedOffset = rawSeed ? hashSeed(rawSeed) : 0;
+
+    $.get(QRNG_ENDPOINT, function(data) {
+      var numbers = data.numbers; // Expects 64 numbers array
+      var compilation = "";
+
+      // 16 4-byte entropy blocks mapping through t1 weaver
+      for (var i = 0; i < 16; i++) {
+        var poolSlice = numbers.slice(i * 4, (i + 1) * 4);
+        
+        // Primary T1 Weaver Pass
+        var res1 = weaver(poolSlice, end0r, seedOffset, i);
+        if (compilation.length < 333 && res1) {
+          compilation += res1 + " ";
+        }
+
+        // Secondary T3 Weaver Pass
+        var res3 = t3(poolSlice, end0r, seedOffset, i);
+        if (compilation.length < 333 && res3) {
+          compilation += res3 + " ";
+        }
+      }
+
+      if (compilation.trim()) {
+        var entryHtml = `<span><span class="seed-header">${seedLabel}</span>${compilation.trim()} </span>`;
+        $("#spellbook").append(entryHtml).show();
+        $("#clearOracleBtn").show();
+      }
+
+      $("#QRNG").prop("disabled", false);
+    }).fail(function(err) {
+      console.error("Quantum source error:", err);
+      $("#QRNG").prop("disabled", false);
+    });
+  });
+});
+</script>
+</body>
+</html>
