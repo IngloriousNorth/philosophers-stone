@@ -190,7 +190,7 @@ function t3(poolSlice, end0r, seedOffset, sliceIndex) {
   if (total === 0) return "";
 
   var segmentSize = Math.floor(total / 32);
-  var secondaryEntropy = (poolSlice[3] * 4096) + (poolSlice[2] * 256) + (poolSlice[1] * 16) + poolSlice[0];
+  var secondaryEntropy = (poolSlice[3] * 5578) + (poolSlice[2] * 333) + (poolSlice[1] * 32) + poolSlice[0];
   
   var index = ((sliceIndex * segmentSize) + secondaryEntropy + (seedOffset * 3)) % total;
   var ra = (poolSlice[0] % 13) + 1;
