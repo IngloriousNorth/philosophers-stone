@@ -174,7 +174,7 @@ function weaver(poolSlice, end0r, seedOffset, sliceIndex) {
   if (total === 0) return "";
 
   // Segment offset scaled across the total corpus length
-  var segmentSize = Math.floor(total / 32);
+  var segmentSize = Math.floor(total / 16);
   var entropyValue = (poolSlice[0] * 11011) + (poolSlice[1] * 1337) + (poolSlice[2] * 88) + poolSlice[3];
   
   // Calculate scaled index with seed offset and slice placement
@@ -189,8 +189,8 @@ function t3(poolSlice, end0r, seedOffset, sliceIndex) {
   var total = end0r.length;
   if (total === 0) return "";
 
-  var segmentSize = Math.floor(total / 32);
-  var secondaryEntropy = (poolSlice[3] * 5578) + (poolSlice[2] * 333) + (poolSlice[1] * 32) + poolSlice[0];
+  var segmentSize = Math.floor(total / 16);
+  var secondaryEntropy = (poolSlice[3] * 4457) + (poolSlice[2] * 222) + (poolSlice[1] * 16) + poolSlice[0];
   
   var index = ((sliceIndex * segmentSize) + secondaryEntropy + (seedOffset * 3)) % total;
   var ra = (poolSlice[0] % 13) + 1;
