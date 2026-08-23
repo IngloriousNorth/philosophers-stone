@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SPINNING-SWORD</title>
+<title>Quantum Philosopher's Stone</title>
 <style>
   *, *::before, *::after {
     box-sizing: border-box;
@@ -73,9 +73,9 @@
 </head>
 <body>
 
-<h1>SPINNING-SWORD</h1><br>
-<span>YOUR SWORD LEND ME YOUR SWORD</span><br><br>
-<img src="https://i.imgur.com/Yhdf7cm.gif"><br><br>
+<h1>Philosopher's Stone</h1><br>
+<span>Seed the Riddle, Solve the Riddle.</span><br><br>
+<img src="https://i.imgur.com/d86vxNG.jpeg"><br><br>
 
 <!-- DB Load & Text Extraction Controls -->
 <div class="controls">
@@ -94,7 +94,7 @@
 <!-- Cleromancy Controls -->
 <div class="controls">
   <input type="text" id="seedInput" placeholder="Seed Key">
-  <button id="QRNG" disabled>Cleromance</button>
+  <button id="QRNG" disabled>Ask Osiris?</button>
 </div>
 
 <div id="spellbook" hidden></div>
@@ -302,7 +302,7 @@ $(document).ready(function() {
       var numbers = data.numbers; // Expects 64 numbers array
       var compilation = "";
 
-      for (var i = 0; i < 16; i++) {
+      for (var i = 0; i < 14; i++) {
         var poolSlice = numbers.slice(i * 4, (i + 1) * 4);
         
         var res1 = weaver(poolSlice, end0r, seedOffset, i);
