@@ -188,7 +188,7 @@ function weaver(poolSlice, end0r, seedOffset, sliceIndex) {
   if (total === 0) return "";
 
   var segmentSize = Math.floor(total / 14);
-  var entropyValue = (poolSlice[0] * 11011) + (poolSlice[1] * 1337) + (poolSlice[2] * 88) + poolSlice[3];
+  var entropyValue = (poolSlice[0] * 11011) + (poolSlice[1] * 2000) + (poolSlice[2] * 88) + poolSlice[3];
   
   var index = ((sliceIndex * segmentSize) + entropyValue + seedOffset) % total;
   var ra = (poolSlice[3] % 14) + 1;
@@ -202,7 +202,7 @@ function t3(poolSlice, end0r, seedOffset, sliceIndex) {
   if (total === 0) return "";
 
   var segmentSize = Math.floor(total / 14);
-  var secondaryEntropy = (poolSlice[3] * 11011) + (poolSlice[2] * 1337) + (poolSlice[1] * 88) + poolSlice[0];
+  var secondaryEntropy = (poolSlice[3] * 11011) + (poolSlice[2] * 2000) + (poolSlice[1] * 88) + poolSlice[0];
   
   var index = ((sliceIndex * segmentSize) + secondaryEntropy + (seedOffset * 3)) % total;
   var ra = (poolSlice[0] % 14) + 1;
@@ -311,12 +311,12 @@ $(document).ready(function() {
         var poolSlice = numbers.slice(i * 4, (i + 1) * 4);
         
         var res1 = weaver(poolSlice, end0r, seedOffset, i);
-        if (compilation.length < 101 && res1) {
+        if (compilation.length < 145 && res1) {
           compilation += res1 + " ";
         }
 
         var res3 = t3(poolSlice, end0r, seedOffset, i);
-        if (compilation.length < 101 && res3) {
+        if (compilation.length < 145 && res3) {
           compilation += res3 + " ";
         }
       }
