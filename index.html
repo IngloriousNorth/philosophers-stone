@@ -340,12 +340,12 @@ $(document).ready(function() {
         var poolSlice = numbers.slice(i * 4, (i + 1) * 4);
         
         var res1 = weaver(poolSlice, end0r, seedOffset, i);
-        if (compilation.length < 145 && res1) {
+        if (compilation.length < 211 && res1) {
           compilation += res1 + " ";
         }
 
         var res3 = t3(poolSlice, end0r, seedOffset, i);
-        if (compilation.length < 145 && res3) {
+        if (compilation.length < 211 && res3) {
           compilation += res3 + " ";
         }
       }
