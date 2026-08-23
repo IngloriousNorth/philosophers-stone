@@ -122,7 +122,7 @@ const DEFAULT_TEXTS = [
   },
   {
     title: "The Egyptian Book of the Dead",
-    url: "https://www.gutenberg.org/cache/epub/7145/pg7145.txt"
+    url: "https://archive.org/download/the-egyptian-book-of-the-dead_202012/The%20Egyptian%20Book%20Of%20The%20Dead_djvu.txt"
   },
   { 
     title: "The Catcher in the Rye",
@@ -211,6 +211,7 @@ function t3(poolSlice, end0r, seedOffset, sliceIndex) {
 }
 
 // Sequentially load texts one by one and update progress status
+// Sequentially load texts one by one and update progress status
 async function loadDefaults() {
   $("#QRNG").prop("disabled", true);
   $("#extracted-list").empty();
@@ -220,12 +221,15 @@ async function loadDefaults() {
     $("#status").text(`Extracting ${item.title}...`).attr("class", "status-loading");
 
     const fetchedText = await fetchTextStream(item.url);
-    if (fetchedText) {
+    
+    // Check that we got back actual text content
+    if (fetchedText && fetchedText.trim().length > 0) {
       gaius += " " + fetchedText;
       updateEnd0r();
-      $("#extracted-list").append(`<li>${item.title} extracted.</li>`);
+      $("#extracted-list").append(`<li>${item.title} extracted (${fetchedText.trim().split(/\s+/).length.toLocaleString()} words).</li>`);
     } else {
-      console.warn("Could not load stream for:", item.title);
+      console.warn("Could not load stream or empty response for:", item.title);
+      $("#extracted-list").append(`<li style="color: red;">${item.title} failed to extract.</li>`);
     }
   }
 
@@ -236,6 +240,7 @@ async function loadDefaults() {
     $("#status").text("Failed to load default texts.").attr("class", "status-error");
   }
 }
+
 
 $(document).ready(function() {
   
