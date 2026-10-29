@@ -167,7 +167,6 @@ async function fetchTextStream(targetUrl) {
   try {
     const res = await fetch(proxyUrl, { signal: controller.signal });
     clearTimeout(timeoutId);
-    const res = await fetch(proxyUrl);
 
     if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
     const data = await res.json();
