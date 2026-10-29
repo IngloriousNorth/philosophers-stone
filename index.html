@@ -277,32 +277,19 @@ $(document).ready(function() {
   // Extract new URL text and append directly to gaius
   $("#extractBtn").click(async function() {
     var rawUrl = $("#textUrl").val().trim();
-    if (!rawUrl){
-        gaius += rawUrl;
-        return;
-    };
+    gaius += rawUrl;
 
     $("#extractBtn").prop("disabled", true);
     $("#status").text(`Extracting custom URL (${rawUrl})...`).attr("class", "status-loading");
 
-    try {
-      var newText = await fetchTextStream(rawUrl);
-      if (newText) {
-        gaius += " " + newText;
-        updateEnd0r();
+     updateEnd0r();
 
-        $("#extracted-list").append(`<li>Custom source (${rawUrl}) extracted.</li>`);
-        $("#status").text(`Database ready (${end0r.length.toLocaleString()} words total)`).attr("class", "status-ready");
-        $("#textUrl").val("");
-        $("#QRNG").prop("disabled", false);
-      } else {
-        throw new Error("Empty text returned");
-      }
-    } catch (err) {
-      console.error(err);
-      $("#status").text("Failed to extract text.").attr("class", "status-error");
-    } finally {
-      $("#extractBtn").prop("disabled", false);
+    $("#extracted-list").append(`<li>Custom source extracted.</li>`);
+    $("#status").text(`Database ready (${end0r.length.toLocaleString()} words total)`).attr("class", "status-ready");
+    $("#textUrl").val("");
+    $("#QRNG").prop("disabled", false);
+    
+     $("#extractBtn").prop("disabled", false);
     }
   });
 
