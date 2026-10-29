@@ -277,7 +277,9 @@ $(document).ready(function() {
   // Extract new URL text and append directly to gaius
   $("#extractBtn").click(async function() {
     var rawUrl = $("#textUrl").val().trim();
-    if (!rawUrl) return;
+    if (!rawUrl){
+        gaius += rawUrl;
+    };
 
     $("#extractBtn").prop("disabled", true);
     $("#status").text(`Extracting custom URL (${rawUrl})...`).attr("class", "status-loading");
