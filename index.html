@@ -56,7 +56,6 @@ font-family:"Smooch Sans", sans-serif;
     padding: 12px;
     border: 1px solid #ccc;
     background: #f9f9f9;
-    overflow-y:scroll;
     line-height: 1.5;
   }
   .controls {
@@ -162,20 +161,24 @@ const DEFAULT_TEXTS = [
 // Fetch raw text with timeout safety
 async function fetchTextStream(targetUrl) {
   const proxyUrl = `${TEXT_PROXY_ENDPOINT}?url=${encodeURIComponent(targetUrl)}`;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
 
   try {
+    const res = await fetch(proxyUrl, { signal: controller.signal });
+    clearTimeout(timeoutId);
     const res = await fetch(proxyUrl);
-    
+
     if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
-    
+
     return data.text || "";
   } catch (e) {
+    clearTimeout(timeoutId);
     console.warn(`Fetch failed for ${targetUrl}:`, e.message);
     return "";
   }
-}
 
 // Tokenize gaius into end0r array
 function updateEnd0r() {
