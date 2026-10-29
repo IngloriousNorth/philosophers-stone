@@ -279,6 +279,7 @@ $(document).ready(function() {
     var rawUrl = $("#textUrl").val().trim();
     if (!rawUrl){
         gaius += rawUrl;
+        return;
     };
 
     $("#extractBtn").prop("disabled", true);
